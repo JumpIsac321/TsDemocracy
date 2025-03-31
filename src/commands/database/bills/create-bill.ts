@@ -1,6 +1,7 @@
 import { Guild, Message, SlashCommandBuilder, TextChannel } from "discord.js";
 import { Sequelize } from "sequelize";
 import { bills } from "../../../discord-ids.json"
+import { bill_voting_time } from "../../../times.json"
 
 
 module.exports = {
@@ -15,7 +16,7 @@ module.exports = {
     const bill_text = interaction.options.getString("text");
     const Bill = sequelize.models.Bill;
     const now = Math.round(Date.now()/1000)
-    const bill: any = await Bill.create({bill_text: bill_text, upvotes: 0, downvotes: 0, message_id: 0, end_time: (now + 10), has_ended: false});
+    const bill: any = await Bill.create({bill_text: bill_text, upvotes: 0, downvotes: 0, message_id: 0, end_time: (now + bill_voting_time), has_ended: false});
     const guild: Guild = interaction.guild
     const billChannel = await guild.channels.fetch(bills);
     if (!(billChannel instanceof TextChannel)){return}

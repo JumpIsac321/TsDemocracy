@@ -4,11 +4,14 @@ import { Client, Collection, CommandInteraction, Events, GatewayIntentBits, Guil
 import { token, databasePassword, databaseName } from './config.json';
 import { server, bills, president_office, main, president_role } from "./discord-ids.json"
 import { Sequelize, DataTypes, Op } from 'sequelize';
+import { check_bills, check_election, checks_election } from "./times.json"
 
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 const sequelize = new Sequelize(`mysql://root:${databasePassword}@localhost:3306/${databaseName}`);
+
+let has_electioned = false;
 
 const Bill = sequelize.define('Bill', {
   id: {
@@ -189,8 +192,20 @@ client.once(Events.ClientReady, async readyClient => {
         await bill.destroy();
       }
     });
-  }, 1000)
+  }, check_bills)
   setInterval(async () => {
+    if (!checks_election){
+      return;
+    }
+    const now = new Date()
+    if (now.getDay() != 1 || now.getHours() != 16){
+      has_electioned = false;
+      return;
+    }
+    if (has_electioned){
+      return;
+    }
+    has_electioned = true;
     const candidate = await Candidate.findOne({
       order: [['votes','DESC']]
     })
@@ -243,7 +258,7 @@ client.once(Events.ClientReady, async readyClient => {
       truncate: true
     })
     mainChannel.send(`<@${candidateMemberId}> has been elected president!`);
-  }, 10000)
+  }, check_election)
 });
 
 async function runRegularCommand(interaction: CommandInteraction, command: any){
