@@ -1,6 +1,6 @@
 import { Sequelize, DataTypes } from 'sequelize';
-import { databasePassword } from "./config.json";
-const sequelize = new Sequelize(`mysql://root:${databasePassword}@localhost:3306/Democracy`);
+import { databasePassword,databaseName } from "./config.json";
+const sequelize = new Sequelize(`mysql://root:${databasePassword}@localhost:3306/${databaseName}`);
 const Bill = sequelize.define('Bill', {
   id: {
     type: DataTypes.INTEGER,
@@ -123,7 +123,7 @@ const President = sequelize.define('President',{
   }
 
 
-  await Bill.sync();
+  await Bill.sync({alter: true});
   await BillVoter.sync();
   await Law.sync();
   await Candidate.sync();

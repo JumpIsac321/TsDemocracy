@@ -36,6 +36,10 @@ const Bill = sequelize.define('Bill', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  bill_type: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
   end_time: {
     type: DataTypes.INTEGER,
     allowNull: false,
