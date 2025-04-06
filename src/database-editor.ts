@@ -1,8 +1,6 @@
 import { Sequelize, DataTypes } from 'sequelize';
 import { databasePassword } from "./config.json";
-
 const sequelize = new Sequelize(`mysql://root:${databasePassword}@localhost:3306/Democracy`);
-
 const Bill = sequelize.define('Bill', {
   id: {
     type: DataTypes.INTEGER,
@@ -24,10 +22,97 @@ const Bill = sequelize.define('Bill', {
   message_id: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  bill_type: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  end_time: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  has_ended: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
   }
 });
 
+const BillVoter = sequelize.define('BillVoter', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  member_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  bill_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  is_upvote: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+  }
+});
 
+const Law = sequelize.define('Law', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  law_text: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  message_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  }
+});
+
+const Candidate = sequelize.define('Candidate', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  member_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  votes: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  }
+});
+
+const Voter = sequelize.define('Voter', {
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey: true
+  },
+  member_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  candidate_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+});
+
+const President = sequelize.define('President',{
+  member_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+}, {
+  freezeTableName: true
+});
 
 (async () => {
   try {
@@ -37,20 +122,14 @@ const Bill = sequelize.define('Bill', {
     console.error('Unable to connect to the database:', error);
   }
 
-  const testBill: any = await Bill.create({
-    bill_text: "this is a test bill",
-    upvotes: 0,
-    downvotes: 0,
-    message_id: "120390129"
-  })
-  console.log(`Bill id: ${testBill.id}`);
 
-  //await testBill.destroy();
-  
-  // await Bill.destroy({
-  //   truncate: true
-  // })
+  await Bill.sync();
+  await BillVoter.sync();
+  await Law.sync();
+  await Candidate.sync();
+  await Voter.sync();
+  await President.sync();
 
-  await Bill.sync({alter: true});
   await sequelize.close()
 })();
+

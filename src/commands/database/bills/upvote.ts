@@ -24,7 +24,7 @@ module.exports = {
       await interaction.reply("You entered an invalid bill number")
       return;
     }
-    if (bill.get("has_ended") == true){
+    if (bill.get("has_ended")){
       await interaction.reply("The voting period for this bill is over");
     }
     await bill.increment("upvotes");
@@ -34,7 +34,11 @@ module.exports = {
     const bill_channel = await interaction.guild.channels.fetch(bills)
     if (!(bill_channel instanceof TextChannel)){return}
     const message = await bill_channel.messages.fetch(bill_message_id)
-    await message.edit(`Bill #${bill.get("id")}: ${bill.get("bill_text")} :arrow_up::${bill.get("upvotes")} :arrow_down::${bill.get("downvotes")} @everyone`)
+    if (bill.get("bill_type") == 1){
+      await message.edit(`Bill #${bill.get("id")}: Ban <@${bill.get("bill_text")}> :arrow_up::${bill.get("upvotes")} :arrow_down::${bill.get("downvotes")} @everyone`)
+    }else{
+      await message.edit(`Bill #${bill.get("id")}: ${bill.get("bill_text")} :arrow_up::${bill.get("upvotes")} :arrow_down::${bill.get("downvotes")} @everyone`)
+    }
     await interaction.reply("You upvoted the bill")
   }
 }

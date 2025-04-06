@@ -1,4 +1,4 @@
-import { Guild, SlashCommandBuilder, TextChannel } from "discord.js";
+import { Guild, SlashCommandBuilder, TextChannel, User } from "discord.js";
 import { Sequelize } from "sequelize";
 import { bills, laws } from "../../../discord-ids.json"
 
@@ -37,7 +37,10 @@ module.exports = {
       await interaction.reply("You entered an invalid bill number");
       return;
     }
-    const law = await Law.create({law_text: bill.get("bill_text"), message_id: 0});
+    const userid: any = bill.get("bill_text")
+    const targetuser: User = await interaction.client.users.fetch(userid)
+    const username = targetuser.username
+    const law = await Law.create({law_text: `${username} is banned`, message_id: 0});
     const law_message = await law_channel.send(`#${law.get("id")}: ${law.get("law_text")}`);
     law.set("message_id", law_message.id);
     await law.save();
@@ -45,6 +48,7 @@ module.exports = {
     const bill_message = await bill_channel.messages.fetch(bill_message_id);
     await bill_message.delete();
     await bill.destroy();
+    await guild.members.ban(userid)
     await interaction.reply("You signed a bill");
   }
 }

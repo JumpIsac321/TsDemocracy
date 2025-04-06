@@ -1,10 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { Client, Collection, CommandInteraction, Events, GatewayIntentBits, GuildMember, MessageFlags, TextChannel } from 'discord.js';
+import { Client, Collection, CommandInteraction, EmbedBuilder, Events, GatewayIntentBits, GuildMember, MessageFlags, TextChannel } from 'discord.js';
 import { token, databasePassword, databaseName } from './config.json';
 import { server, bills, president_office, main, president_role } from "./discord-ids.json"
 import { Sequelize, DataTypes, Op } from 'sequelize';
 import { check_bills, check_election, checks_election } from "./times.json"
+import { send } from 'node:process';
 
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -78,6 +79,11 @@ const Law = sequelize.define('Law', {
   message_id: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  law_type: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
   }
 });
 
@@ -147,6 +153,21 @@ function setCommands(mainFolder: string): Collection<String,any>{
 let commands: Collection<String,any> = setCommands('regular');
 let database_commands: Collection<String, any> = setCommands('database');
 
+async function sendMessages(){
+  const exampleEmbed = new EmbedBuilder()
+    .setTitle("Bot Commands")
+    .setDescription("# Bot Commands\n### /run: run for president\n### /unrun: stop running for president\n### /vote @username: vote for a candidate to become president\n### /unvote: reverse your vote for a candidate\n### /candidates: view the candidates\n\
+    ### /create-bill: propose a bill to try and create a law\n### /upvote bill-number: upvotes a bill\n### /downvote bill-number: downvotes a bill\n### /unvote-bill bill-number: reverses your vote for a bill\n## Only for president:\n\
+    ### /approve bill-number: signs a bill into law\n### /veto bill-number: remove a bill after it has been voted in\n### /ea: ea")
+  const guild = await client.guilds.fetch("1277053200528052316");
+  const channel = await guild.channels.fetch("1277053201023111200");
+  if (!(channel instanceof TextChannel)){
+    return;
+  }
+  await channel.send({embeds: [exampleEmbed]});
+  await channel.send("hi");
+}
+
 client.once(Events.ClientReady, async readyClient => {
 	console.log(`Ready! Logged in as ${readyClient.user.tag}`);
   await Bill.sync({force: true});
@@ -167,6 +188,7 @@ client.once(Events.ClientReady, async readyClient => {
   if (!(bill_channel instanceof TextChannel) || !(president_office_channel instanceof TextChannel)){
     return
   }
+  await sendMessages();
   setInterval(async () => {
     const finished_bills = await Bill.findAll({
       where: {
@@ -185,7 +207,7 @@ client.once(Events.ClientReady, async readyClient => {
       const bill_message = await bill_channel.messages.fetch(bill_message_id);
       if (bill_upvotes >= bill_downvotes){
         await bill_message.edit(`${bill_message.content} (waiting for presidential approval)`)
-        await president_office_channel.send(`New Bill! #${bill.get("id")}: ${bill.get("bill_text")} <@&${president_role}>`)
+        await president_office_channel.send(`New Bill! #${bill.get("id")}: Ban <@${bill.get("bill_text")}> <@&${president_role}>`)
       }else {
         await bill_channel.send(`Bill #${bill.get("id")} has died`);
         await bill_message.delete();
@@ -304,5 +326,5 @@ client.on(Events.InteractionCreate, async interaction => {
 	console.error(`No command matching ${interaction.commandName} was found.`);
 
 });
-``
+
 client.login(token);
