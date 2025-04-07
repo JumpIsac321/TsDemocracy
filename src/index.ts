@@ -5,7 +5,7 @@ import { token, databasePassword, databaseName } from './config.json';
 import { server, bills, president_office, main, president_role } from "./discord-ids.json"
 import { Sequelize, DataTypes, Op } from 'sequelize';
 import { check_bills, check_election, checks_election } from "./times.json"
-import { send } from 'node:process';
+import get_message_text, { get_message_text_president } from './message-text';
 
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -210,11 +210,14 @@ client.once(Events.ClientReady, async readyClient => {
       const bill_downvotes: any = bill.get("downvotes");
       const bill_message = await bill_channel.messages.fetch(bill_message_id);
       if (bill_upvotes >= bill_downvotes){
-        await bill_message.edit(`${bill_message.content} (waiting for presidential approval)`)
-        await president_office_channel.send(`New Bill! #${bill.get("id")}: Ban <@${bill.get("bill_text")}> <@&${president_role}>`)
+        await bill_message.edit(`${get_message_text(bill.get("id"), bill.get("bill_text"), bill.get("upvotes"), bill.get("downvotes"), bill.get("bill_type"))} (waiting for presidential approval)`)
+        await president_office_channel.send(get_message_text_president(bill.get("id"), bill.get("bill_text"), bill.get("bill_type")))
       }else {
         await bill_channel.send(`Bill #${bill.get("id")} has died`);
         await bill_message.delete();
+        await BillVoter.destroy({where: {
+          bill_id: bill.get("id")
+        }})
         await bill.destroy();
       }
     });

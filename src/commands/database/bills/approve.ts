@@ -1,6 +1,7 @@
 import { Guild, SlashCommandBuilder, TextChannel, User } from "discord.js";
 import { Sequelize } from "sequelize";
 import { bills, laws } from "../../../discord-ids.json"
+import { get_message_text_law } from "../../../message-text";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,6 +16,7 @@ module.exports = {
     const Bill = sequelize.models.Bill;
     const Law = sequelize.models.Law;
     const President = sequelize.models.President;
+    const BillVoter = sequelize.models.BillVoter;
     const president = await President.findOne()
     if (president){
       const president_id: any = president.get("member_id");
@@ -37,18 +39,24 @@ module.exports = {
       await interaction.reply("You entered an invalid bill number");
       return;
     }
-    const userid: any = bill.get("bill_text")
-    const targetuser: User = await interaction.client.users.fetch(userid)
-    const username = targetuser.username
-    const law = await Law.create({law_text: `${username} is banned`, message_id: 0});
-    const law_message = await law_channel.send(`#${law.get("id")}: ${law.get("law_text")}`);
+    let username = null;
+    if (bill.get("bill_type") == 1){
+      const userid: any = bill.get("bill_text")
+      const targetuser: User = await interaction.client.users.fetch(userid)
+      username = targetuser.username
+      await guild.members.ban(userid)
+    }
+    const law = await Law.create({law_text: bill.get("bill_text"), message_id: 0, law_type: bill.get("law_type")});
+    const law_message = await law_channel.send(get_message_text_law(bill.get("id"), bill.get("bill_text"), bill.get("bill_type"), username));
     law.set("message_id", law_message.id);
     await law.save();
     const bill_message_id: any = bill.get("message_id");
     const bill_message = await bill_channel.messages.fetch(bill_message_id);
     await bill_message.delete();
     await bill.destroy();
-    await guild.members.ban(userid)
+    await BillVoter.destroy({where: {
+      bill_id: bill.get("id")
+    }})
     await interaction.reply("You signed a bill");
   }
 }

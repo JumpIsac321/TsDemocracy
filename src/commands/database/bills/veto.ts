@@ -13,6 +13,7 @@ module.exports = {
   async execute(interaction: any, sequelize: Sequelize){
     const bill_id = interaction.options.getInteger("bill-number");
     const Bill = sequelize.models.Bill;
+    const BillVoter = sequelize.models.BillVoter;
     const President = sequelize.models.President;
     const president = await President.findOne()
     if (president){
@@ -39,7 +40,11 @@ module.exports = {
     const bill_message_id: any = bill.get("message_id");
     const bill_message = await bill_channel.messages.fetch(bill_message_id);
     await bill_message.delete();
+    await BillVoter.destroy({where: {
+      bill_id: bill.get("id")
+    }})
     await bill.destroy();
     await interaction.reply("You vetoed a bill");
+  
   }
 }

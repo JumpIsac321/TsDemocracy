@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, TextChannel } from "discord.js";
 import { Sequelize } from "sequelize";
 import { bills } from "../../../discord-ids.json"
+import get_message_text from "../../../message-text";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -34,11 +35,7 @@ module.exports = {
     const bill_channel = await interaction.guild.channels.fetch(bills)
     if (!(bill_channel instanceof TextChannel)){return}
     const message = await bill_channel.messages.fetch(bill_message_id)
-    if (bill.get("bill_type") == 1){
-      await message.edit(`Bill #${bill.get("id")}: Ban <@${bill.get("bill_text")}> :arrow_up::${bill.get("upvotes")} :arrow_down::${bill.get("downvotes")} @everyone`)
-    }else{
-      await message.edit(`Bill #${bill.get("id")}: ${bill.get("bill_text")} :arrow_up::${bill.get("upvotes")} :arrow_down::${bill.get("downvotes")} @everyone`)
-    }
+    await message.edit(get_message_text(bill.get("id"), bill.get("bill_text"), bill.get("upvotes"), bill.get("downvotes"), bill.get("bill_type")))
     await interaction.reply("You downvoted the bill")
   }
 }
